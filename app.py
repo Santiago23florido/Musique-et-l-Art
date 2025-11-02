@@ -23,14 +23,14 @@ import subprocess
 import sys
 warnings.filterwarnings('ignore')
 
-# Configuración optimizada
+# Configuration optimisée
 st.set_page_config(
-    page_title="Audio Viz Circular - Upload & Download",
+    page_title="Visualiseur Audio Circulaire - Téléchargement & Génération",
     page_icon="🌊",
     layout="wide"
 )
 
-# Variables globales optimizadas
+# Variables globales optimisées
 if 'audio_data' not in st.session_state:
     st.session_state.audio_data = None
 if 'sample_rate' not in st.session_state:
@@ -51,31 +51,31 @@ class AudioProcessor:
         self.smoothing_factor = 0.25
         
     def extract_features_fast(self, audio_chunk):
-        """Extracción ultrarrápida de características"""
+        """Extraction ultra-rapide des caractéristiques"""
         if len(audio_chunk) == 0:
             return self.create_silent_features()
         
-        # RMS rápido
+        # RMS rapide
         rms = np.sqrt(np.mean(audio_chunk**2))
         
         if rms < self.noise_threshold:
             return self.create_silent_features(rms)
         
-        # FFT optimizada
+        # FFT optimisée
         fft_data = fft(audio_chunk, n=self.buffer_size)
         freqs = fftfreq(self.buffer_size, 1/self.sample_rate)
         magnitudes = np.abs(fft_data)
         
-        # Solo frecuencias positivas
+        # Seulement les fréquences positives
         pos_idx = freqs > 0
         pos_freqs = freqs[pos_idx]
         pos_mags = magnitudes[pos_idx]
         
-        # Encontrar picos principales rápidamente
+        # Trouver les pics principaux rapidement
         if len(pos_mags) == 0:
             return self.create_silent_features(rms)
         
-        # Método más rápido para encontrar picos
+        # Méthode plus rapide pour trouver les pics
         peak_threshold = np.max(pos_mags) * 0.1
         peaks = np.where(pos_mags > peak_threshold)[0]
         
@@ -83,27 +83,27 @@ class AudioProcessor:
             max_idx = np.argmax(pos_mags)
             peaks = [max_idx]
         
-        # Tomar solo los picos más importantes
+        # Prendre seulement les pics les plus importants
         peak_freqs = pos_freqs[peaks]
         peak_mags = pos_mags[peaks]
         
-        # Ordenar por magnitud y tomar los top 4
+        # Trier par magnitude et prendre les top 4
         if len(peak_mags) > 1:
             top_indices = np.argsort(peak_mags)[-4:][::-1]
             peak_freqs = peak_freqs[top_indices]
             peak_mags = peak_mags[top_indices]
         
-        # Características básicas
+        # Caractéristiques de base
         fundamental_freq = peak_freqs[0] if len(peak_freqs) > 0 else 440
         fundamental_mag = peak_mags[0] if len(peak_mags) > 0 else 0
         
-        # Centroide espectral rápido
+        # Centroïde spectral rapide
         if np.sum(pos_mags) > 0:
             spectral_centroid = np.sum(pos_freqs * pos_mags) / np.sum(pos_mags)
         else:
             spectral_centroid = 1000
         
-        # Bandas de energía simplificadas
+        # Bandes d'énergie simplifiées
         low_mask = (pos_freqs >= 0) & (pos_freqs < 500)
         mid_mask = (pos_freqs >= 500) & (pos_freqs < 2000)
         high_mask = (pos_freqs >= 2000) & (pos_freqs < 8000)
@@ -134,7 +134,7 @@ class AudioProcessor:
             'timestamp': time.time()
         }
         
-        # Suavizado en tiempo real
+        # Lissage en temps réel
         if self.prev_features is not None:
             features = self.smooth_features(features, self.prev_features)
         
@@ -142,7 +142,7 @@ class AudioProcessor:
         return features
     
     def smooth_features(self, current, previous):
-        """Suavizado ultrarrápido"""
+        """Lissage ultra-rapide"""
         alpha = self.smoothing_factor
         
         smoothed = current.copy()
@@ -174,26 +174,26 @@ class CircularVisualRenderer:
         self.phase_accumulator = 0
         self.color_cache = {}
         
-        # Pre-calcular posiciones angulares para el círculo
+        # Pré-calculer les positions angulaires pour le cercle
         self.angles = np.linspace(0, 2 * np.pi, num_points, endpoint=False)
         self.base_radius = 3.0
         
-        # Pre-calcular valores para optimización
+        # Pré-calculer les valeurs pour l'optimisation
         self.freq_scalers = np.array([1.0, 0.5, 0.3, 0.2])
         self.phase_multipliers = np.array([1.0, 1.2, 1.4, 1.6])
         
-        # FIXED: Pre-calcular función de suavizado circular con tamaño fijo
+        # CORRIGÉ: Pré-calculer la fonction de lissage circulaire avec taille fixe
         self.smooth_window_size = 20
         self.smooth_window = self._create_circular_smoothing_window(self.smooth_window_size)
         
     def _create_circular_smoothing_window(self, window_size):
-        """Crear ventana de suavizado que respeta la circularidad"""
-        # Ventana gaussiana que se aplica circularmente
+        """Créer une fenêtre de lissage qui respecte la circularité"""
+        # Fenêtre gaussienne qui s'applique circulairement
         window = np.exp(-0.5 * (np.linspace(-2, 2, window_size) ** 2))
         return window / np.sum(window)
     
     def _apply_circular_smoothing(self, values, intensity=0.3):
-        """FIXED: Aplicar suavizado que mantiene la continuidad circular"""
+        """CORRIGÉ: Appliquer un lissage qui maintient la continuité circulaire"""
         if len(values) < 10:
             return values
         
@@ -201,63 +201,63 @@ class CircularVisualRenderer:
         window_half = self.smooth_window_size // 2
         
         for i in range(len(values)):
-            # Obtener índices circulares para la ventana
+            # Obtenir les indices circulaires pour la fenêtre
             indices = []
             for j in range(-window_half, window_half):
                 idx = (i + j) % len(values)
                 indices.append(idx)
             
-            # FIXED: Asegurar que tenemos exactamente el tamaño correcto
+            # CORRIGÉ: S'assurer que nous avons exactement la bonne taille
             if len(indices) != self.smooth_window_size:
-                # Ajustar si hay discrepancia
+                # Ajuster s'il y a une discordance
                 while len(indices) < self.smooth_window_size:
                     indices.append(indices[-1])
                 while len(indices) > self.smooth_window_size:
                     indices.pop()
             
-            # Aplicar ventana de suavizado
+            # Appliquer la fenêtre de lissage
             window_values = values[indices]
             
-            # FIXED: Verificar tamaños antes de la operación
+            # CORRIGÉ: Vérifier les tailles avant l'opération
             if len(window_values) == len(self.smooth_window):
                 smoothed_value = np.sum(window_values * self.smooth_window)
-                # Mezclar con valor original
+                # Mélanger avec la valeur originale
                 smoothed[i] = (1 - intensity) * values[i] + intensity * smoothed_value
         
         return smoothed
         
     def create_circular_visualization(self, features, dt=0.016):
-        """Renderizado circular MEJORADO - círculo perfectamente cerrado"""
+        """Rendu circulaire AMÉLIORÉ - cercle parfaitement fermé"""
         self.phase_accumulator += dt * 4
         
-        # Configurar figura de manera eficiente
+        # Configurer la figure de manière efficace
         fig, ax = plt.subplots(figsize=(12, 12), facecolor='black')
         ax.set_facecolor('black')
         ax.set_aspect('equal')
         
-        # Parámetros normalizados OPTIMIZADOS
+        # Paramètres normalisés OPTIMISÉS
         freq_norm = min(features['fundamental_freq'] / 600, 2.0)
         rms_norm = min(features['rms'] * 50, 1.0)
         centroid_norm = min(features['spectral_centroid'] / 2000, 1.5)
         
-        # Calcular radios para cada punto
+        # Calculer les rayons pour chaque point
         radii = np.full(self.num_points, self.base_radius)
         individual_movement = np.zeros(self.num_points)
         
         if features['is_silent'] or rms_norm < 0.08:
-            # Animación suave para silencio - ASEGURAR CONTINUIDAD
+            # Animation douce pour le silence - ASSURER LA CONTINUITÉ
             ripple = 0.15 * np.sin(2 * self.angles + self.phase_accumulator * 0.8)
             individual_noise = np.random.normal(0, 0.08, self.num_points)
             breathing = 0.1 * np.sin(self.phase_accumulator * 0.5)
             
-            # APLICAR SUAVIZADO CIRCULAR
+            # APPLIQUER LE LISSAGE CIRCULAIRE
             ripple = self._apply_circular_smoothing(ripple, 0.4)
             individual_noise = self._apply_circular_smoothing(individual_noise, 0.6)
             
             radii += ripple + individual_noise + breathing
             individual_movement = individual_noise
             
-            # VERIFICAR CIERRE PERFECTO
+            # VÉRIFIER LA FERMETURE PARFAITE
             radii = self._ensure_smooth_closure(radii)
             
             colors = np.full((self.num_points, 3), [0.2, 0.2, 0.4])
@@ -265,19 +265,19 @@ class CircularVisualRenderer:
             alphas = np.full(self.num_points, 0.4)
             
         else:
-            # DISTORSIÓN CONTROLADA DEL CÍRCULO CON CIERRE SUAVE
+            # DISTORSION CONTRÔLÉE DU CERCLE AVEC FERMETURE DOUCE
             
-            # 1. Onda principal MODERADA
+            # 1. Onde principale MODÉRÉE
             main_freq = features['fundamental_freq'] / 200
             primary_wave_phase = main_freq * self.angles + self.phase_accumulator * 1.5
             primary_wave = np.sin(primary_wave_phase)
             main_distortion = np.clip(rms_norm * 1.2 * primary_wave, -1.2, 1.2)
             
-            # APLICAR SUAVIZADO CIRCULAR A LA ONDA PRINCIPAL
+            # APPLIQUER LE LISSAGE CIRCULAIRE À L'ONDE PRINCIPALE
             main_distortion = self._apply_circular_smoothing(main_distortion, 0.3)
             radii += main_distortion
             
-            # 2. Ondas secundarias MÁS CONTROLADAS
+            # 2. Ondes secondaires PLUS CONTRÔLÉES
             if len(features['peak_freqs']) > 1:
                 for i, (freq, mag) in enumerate(zip(features['peak_freqs'][:3], features['peak_mags'][:3])):
                     if i == 0 or mag == 0:
@@ -291,11 +291,11 @@ class CircularVisualRenderer:
                     amplitude = mag_factor * rms_norm * 0.98
                     secondary_distortion = np.clip(amplitude * secondary_wave, -0.6, 0.6)
                     
-                    # SUAVIZADO CIRCULAR PARA ONDAS SECUNDARIAS
+                    # LISSAGE CIRCULAIRE POUR LES ONDES SECONDAIRES
                     secondary_distortion = self._apply_circular_smoothing(secondary_distortion, 0.2)
                     radii += secondary_distortion
             
-            # 3. MOVIMIENTO INDIVIDUAL CONTROLADO CON CONTINUIDAD
+            # 3. MOUVEMENT INDIVIDUEL CONTRÔLÉ AVEC CONTINUITÉ
             for i in range(0, self.num_points, 4):
                 end_idx = min(i + 4, self.num_points)
                 for j in range(i, end_idx):
@@ -309,39 +309,39 @@ class CircularVisualRenderer:
                     individual_movement[j] = np.clip(individual_movement[j], -0.5, 0.5)
                     radii[j] += individual_movement[j]
             
-            # APLICAR SUAVIZADO CIRCULAR AL MOVIMIENTO INDIVIDUAL
+            # APPLIQUER LE LISSAGE CIRCULAIRE AU MOUVEMENT INDIVIDUEL
             individual_movement = self._apply_circular_smoothing(individual_movement, 0.4)
             radii = self.base_radius * np.ones(self.num_points) + main_distortion + individual_movement
             
-            # 4. Modulación rotatoria SUAVE
+            # 4. Modulation rotatoire DOUCE
             centroid_rotation = centroid_norm * 3 * self.angles + self.phase_accumulator * 1.2
             centroid_wave = 0.4 * np.sin(centroid_rotation)
             centroid_wave = self._apply_circular_smoothing(centroid_wave, 0.3)
             radii += centroid_wave * rms_norm * 0.5
             
-            # 5. Ondas de alta frecuencia MÁS SUTILES
+            # 5. Ondes haute fréquence PLUS SUBTILES
             if features['high_ratio'] > 0.15:
                 high_freq_wave = 0.25 * np.sin(12 * self.angles + self.phase_accumulator * 8) * features['high_ratio']
                 high_freq_wave = self._apply_circular_smoothing(high_freq_wave, 0.5)
                 radii += high_freq_wave * rms_norm * 0.6
             
-            # 6. LIMITADOR GLOBAL CON CONTINUIDAD CIRCULAR
+            # 6. LIMITEUR GLOBAL AVEC CONTINUITÉ CIRCULAIRE
             max_distortion = self.base_radius * 0.8
             radii = np.clip(radii, self.base_radius - max_distortion, self.base_radius + max_distortion)
             
-            # ASEGURAR CIERRE PERFECTO DEL CÍRCULO
+            # ASSURER LA FERMETURE PARFAITE DU CERCLE
             radii = self._ensure_smooth_closure(radii)
             
-            # 7. Efectos globales suaves
+            # 7. Effets globaux doux
             global_breathing = 0.2 * np.sin(self.phase_accumulator * 0.8) * rms_norm
             rhythm_pulse = 0.3 * np.sin(self.phase_accumulator * 4) * (rms_norm ** 2)
             radii += global_breathing + rhythm_pulse
             
-            # Sistema de colores CONTROLADO
+            # Système de couleurs CONTRÔLÉ
             hue_base = (centroid_norm * 0.8 + self.phase_accumulator * 0.03) % 1.0
             colors = self.generate_smooth_colors(radii, individual_movement, hue_base, features)
             
-            # Tamaños PEQUEÑOS Y CONTROLADOS
+            # Tailles PETITES ET CONTRÔLÉES
             radius_variation = np.abs(radii - self.base_radius)
             individual_intensity = np.abs(individual_movement)
             combined_intensity = radius_variation + individual_intensity
@@ -349,58 +349,58 @@ class CircularVisualRenderer:
             point_sizes = 2.0 + combined_intensity * 8
             point_sizes = np.clip(point_sizes, 1.0, 12)
             
-            # Transparencias SUAVES
+            # Transparences DOUCES
             max_intensity = np.max(radius_variation + individual_intensity) + 1e-6
             local_energy = (radius_variation + individual_intensity) / max_intensity
             alphas = 0.5 + local_energy * 0.3
             alphas = np.clip(alphas, 0.3, 0.8)
         
-        # Convertir coordenadas polares a cartesianas
+        # Convertir les coordonnées polaires en cartésiennes
         x_positions = radii * np.cos(self.angles)
         y_positions = radii * np.sin(self.angles)
         
-        # Renderizado SUAVE
+        # Rendu DOUX
         self.render_smooth_points(ax, x_positions, y_positions, colors, point_sizes, alphas, individual_movement)
         
-        # Círculo de referencia SIEMPRE VISIBLE
+        # Cercle de référence TOUJOURS VISIBLE
         circle_alpha = 0.3 if rms_norm > 0.08 else 0.2
         reference_circle = plt.Circle((0, 0), self.base_radius, 
                                     fill=False, color='cyan', 
                                     alpha=circle_alpha, linewidth=1.0)
         ax.add_patch(reference_circle)
         
-        # Configurar ejes
+        # Configurer les axes
         max_radius = self.base_radius * 1.8
         ax.set_xlim(-max_radius, max_radius)
         ax.set_ylim(-max_radius, max_radius)
         ax.axis('off')
         
-        # Título informativo
+        # Titre informatif
         if not features['is_silent']:
-            title = f"🎵 {features['fundamental_freq']:.0f}Hz | RMS: {features['rms']:.3f} | Puntos: {self.num_points}"
+            title = f"🎵 {features['fundamental_freq']:.0f}Hz | RMS: {features['rms']:.3f} | Points: {self.num_points}"
             plt.suptitle(title, color='white', fontsize=11, y=0.95)
         
         plt.tight_layout()
         return fig
     
     def _ensure_smooth_closure(self, radii, blend_points=10):
-        """MEJORA: Asegurar que el inicio y final del círculo se unan suavemente"""
+        """AMÉLIORATION: S'assurer que le début et la fin du cercle se rejoignent en douceur"""
         if len(radii) < blend_points * 2:
             return radii
         
-        # Crear una copia para modificar
+        # Créer une copie pour modifier
         smooth_radii = radii.copy()
         
-        # Obtener valores del inicio y final
+        # Obtenir les valeurs du début et de la fin
         start_values = radii[:blend_points]
         end_values = radii[-blend_points:]
         
-        # Crear promedio ponderado para suavizar la unión
+        # Créer une moyenne pondérée pour lisser la jonction
         for i in range(blend_points):
-            # Factor de mezcla (más peso al centro, menos en los bordes)
+            # Facteur de mélange (plus de poids au centre, moins sur les bords)
             weight = (i + 1) / (blend_points + 1)
             
-            # Mezclar inicio con final
+            # Mélanger le début avec la fin
             start_blend = (1 - weight) * start_values[i] + weight * end_values[-(i+1)]
             end_blend = (1 - weight) * end_values[-(i+1)] + weight * start_values[i]
             
@@ -410,16 +410,16 @@ class CircularVisualRenderer:
         return smooth_radii
     
     def generate_smooth_colors(self, radii, individual_movement, hue_base, features):
-        """Generación de colores SUAVE - con continuidad circular"""
+        """Génération de couleurs DOUCE - avec continuité circulaire"""
         colors = np.zeros((len(radii), 3))
         
-        # Color base que rota SUAVEMENTE
+        # Couleur de base qui tourne DOUCEMENT
         base_hue = (hue_base + self.angles / (2 * np.pi) * 0.4) % 1.0
         
-        # APLICAR SUAVIZADO CIRCULAR A LOS COLORES
+        # APPLIQUER LE LISSAGE CIRCULAIRE AUX COULEURS
         base_hue = self._apply_circular_smoothing(base_hue, 0.3)
         
-        # Variación SUAVE por lotes
+        # Variation DOUCE par lots
         for i in range(0, len(colors), 100):
             end_idx = min(i + 100, len(colors))
             for j in range(i, end_idx):
@@ -444,7 +444,7 @@ class CircularVisualRenderer:
                 elif radius_factor < -0.2:
                     colors[j] *= (1 - abs(radius_factor) * 0.2)
         
-        # Efectos especiales SUTILES
+        # Effets spéciaux SUBTILS
         if features['high_ratio'] > 0.2:
             high_freq_mask = np.random.random(len(colors)) < features['high_ratio'] * 0.1
             colors[high_freq_mask] += np.array([0.2, 0.2, 0.2])
@@ -460,14 +460,14 @@ class CircularVisualRenderer:
         return np.clip(colors, 0, 1)
     
     def render_smooth_points(self, ax, x_pos, y_pos, colors, sizes, alphas, individual_movement):
-        """Renderizado SUAVE - sin efectos extremos"""
+        """Rendu DOUX - sans effets extrêmes"""
         movement_intensity = np.abs(individual_movement)
         
         high_movement_mask = movement_intensity > 0.4
         medium_movement_mask = (movement_intensity > 0.2) & (movement_intensity <= 0.4)
         low_movement_mask = movement_intensity <= 0.2
         
-        # Renderizar puntos de bajo movimiento (mayoría)
+        # Rendre les points de faible mouvement (majorité)
         if np.any(low_movement_mask):
             ax.scatter(
                 x_pos[low_movement_mask], 
@@ -478,7 +478,7 @@ class CircularVisualRenderer:
                 edgecolors='none'
             )
         
-        # Renderizar puntos de movimiento medio
+        # Rendre les points de mouvement moyen
         if np.any(medium_movement_mask):
             ax.scatter(
                 x_pos[medium_movement_mask], 
@@ -490,7 +490,7 @@ class CircularVisualRenderer:
                 linewidths=0.2
             )
         
-        # Renderizar puntos de ALTO movimiento
+        # Rendre les points de HAUT mouvement
         if np.any(high_movement_mask):
             ax.scatter(
                 x_pos[high_movement_mask], 
@@ -512,16 +512,16 @@ class CircularVisualRenderer:
             )
 
 def check_ffmpeg():
-    """Verificar si FFmpeg está disponible"""
+    """Vérifier si FFmpeg est disponible"""
     try:
-        # Primero intentar con FFmpeg del sistema
+        # D'abord essayer avec FFmpeg du système
         subprocess.run(['ffmpeg', '-version'], 
                       stdout=subprocess.DEVNULL, 
                       stderr=subprocess.DEVNULL, 
                       check=True)
         return True
     except (subprocess.CalledProcessError, FileNotFoundError):
-        # Si no encuentra FFmpeg del sistema, intentar con imageio-ffmpeg
+        # Si FFmpeg du système n'est pas trouvé, essayer avec imageio-ffmpeg
         try:
             import imageio_ffmpeg as ffmpeg
             ffmpeg_exe = ffmpeg.get_ffmpeg_exe()
@@ -534,16 +534,16 @@ def check_ffmpeg():
             return False
 
 def get_ffmpeg_executable():
-    """Obtener la ruta del ejecutable FFmpeg"""
+    """Obtenir le chemin de l'exécutable FFmpeg"""
     try:
-        # Primero intentar con FFmpeg del sistema
+        # D'abord essayer avec FFmpeg du système
         subprocess.run(['ffmpeg', '-version'], 
                       stdout=subprocess.DEVNULL, 
                       stderr=subprocess.DEVNULL, 
                       check=True)
         return 'ffmpeg'
     except (subprocess.CalledProcessError, FileNotFoundError):
-        # Si no encuentra FFmpeg del sistema, usar imageio-ffmpeg
+        # Si FFmpeg du système n'est pas trouvé, utiliser imageio-ffmpeg
         try:
             import imageio_ffmpeg as ffmpeg
             return ffmpeg.get_ffmpeg_exe()
@@ -551,7 +551,7 @@ def get_ffmpeg_executable():
             return None
 
 def install_ffmpeg():
-    """Intentar instalar FFmpeg"""
+    """Essayer d'installer FFmpeg"""
     try:
         subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'imageio-ffmpeg'])
         return True
@@ -559,7 +559,7 @@ def install_ffmpeg():
         return False
 
 def load_wav_file(uploaded_file):
-    """Cargar archivo WAV desde upload"""
+    """Charger un fichier WAV depuis l'upload"""
     try:
         audio_bytes = uploaded_file.read()
         
@@ -582,11 +582,11 @@ def load_wav_file(uploaded_file):
         return audio_data, sample_rate
         
     except Exception as e:
-        st.error(f"Error cargando archivo WAV: {e}")
+        st.error(f"Erreur lors du chargement du fichier WAV : {e}")
         return None, None
 
 def generate_video_with_audio(audio_data, sample_rate, target_fps=30, num_points=3000):
-    """Generar video completo con audio sincronizado"""
+    """Générer une vidéo complète avec audio synchronisé"""
     
     processor = AudioProcessor(sample_rate, buffer_size=1024)
     renderer = CircularVisualRenderer(num_points=num_points)
@@ -600,13 +600,13 @@ def generate_video_with_audio(audio_data, sample_rate, target_fps=30, num_points
     progress_container = st.empty()
     status_container = st.empty()
     
-    status_container.info(f"🎬 Generando {total_frames} frames a {target_fps} FPS...")
+    status_container.info(f"🎬 Génération de {total_frames} images à {target_fps} FPS...")
     
     for frame_idx in range(total_frames):
         frame_start_time = frame_idx * frame_duration
         
         progress = frame_idx / total_frames
-        progress_container.progress(progress, f"Frame {frame_idx + 1}/{total_frames}")
+        progress_container.progress(progress, f"Image {frame_idx + 1}/{total_frames}")
         
         audio_position = int(frame_start_time * sample_rate)
         chunk_size = 1024
@@ -635,17 +635,17 @@ def generate_video_with_audio(audio_data, sample_rate, target_fps=30, num_points
                 buf.close()
     
     progress_container.progress(1.0)
-    status_container.success(f"✅ {len(st.session_state.video_frames)} frames generados")
+    status_container.success(f"✅ {len(st.session_state.video_frames)} images générées")
     
     return len(st.session_state.video_frames) > 0
 
 def create_video_file_with_audio(audio_data, sample_rate, target_fps=30):
-    """MEJORA: Crear archivo de video MP4 CON AUDIO"""
+    """AMÉLIORATION: Créer un fichier vidéo MP4 AVEC AUDIO"""
     if not st.session_state.video_frames:
         return None
     
     try:
-        # Crear archivos temporales
+        # Créer des fichiers temporaires
         video_temp = tempfile.NamedTemporaryFile(suffix='.mp4', delete=False)
         audio_temp = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
         final_temp = tempfile.NamedTemporaryFile(suffix='.mp4', delete=False)
@@ -658,7 +658,7 @@ def create_video_file_with_audio(audio_data, sample_rate, target_fps=30):
         audio_temp.close()
         final_temp.close()
         
-        # 1. Crear video sin audio
+        # 1. Créer la vidéo sans audio
         height, width = st.session_state.video_frames[0].shape[:2]
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         video_writer = cv2.VideoWriter(video_temp_path, fourcc, target_fps, (width, height))
@@ -668,29 +668,29 @@ def create_video_file_with_audio(audio_data, sample_rate, target_fps=30):
         
         video_writer.release()
         
-        # 2. Guardar audio original
+        # 2. Sauvegarder l'audio original
         wavfile.write(audio_temp_path, sample_rate, (audio_data * 32767).astype(np.int16))
         
-        # 3. Verificar FFmpeg
+        # 3. Vérifier FFmpeg
         if not check_ffmpeg():
-            st.warning("FFmpeg no encontrado. Intentando instalarlo...")
+            st.warning("FFmpeg non trouvé. Tentative d'installation...")
             if install_ffmpeg():
-                st.success("FFmpeg instalado correctamente")
+                st.success("FFmpeg installé correctement")
             else:
-                st.error("No se pudo instalar FFmpeg. El video se descargará sin audio.")
-                # Devolver video sin audio
+                st.error("Impossible d'installer FFmpeg. La vidéo sera téléchargée sans audio.")
+                # Retourner la vidéo sans audio
                 with open(video_temp_path, 'rb') as f:
                     video_bytes = f.read()
                 os.unlink(video_temp_path)
                 os.unlink(audio_temp_path)
                 return video_bytes
         
-        # 4. Combinar video y audio con FFmpeg
+        # 4. Combiner vidéo et audio avec FFmpeg
         try:
-            # Obtener el ejecutable correcto de FFmpeg
+            # Obtenir l'exécutable correct de FFmpeg
             ffmpeg_exe = get_ffmpeg_executable()
             if not ffmpeg_exe:
-                st.error("No se encontró FFmpeg. El video se descargará sin audio.")
+                st.error("FFmpeg non trouvé. La vidéo sera téléchargée sans audio.")
                 with open(video_temp_path, 'rb') as f:
                     video_bytes = f.read()
                 os.unlink(video_temp_path)
@@ -698,13 +698,13 @@ def create_video_file_with_audio(audio_data, sample_rate, target_fps=30):
                 return video_bytes
             
             ffmpeg_cmd = [
-                ffmpeg_exe, '-y',  # Usar el ejecutable correcto
-                '-i', video_temp_path,  # Video de entrada
-                '-i', audio_temp_path,  # Audio de entrada
-                '-c:v', 'libx264',  # Codec de video
-                '-c:a', 'aac',  # Codec de audio
-                '-shortest',  # Duración del más corto
-                '-pix_fmt', 'yuv420p',  # Formato de pixel compatible
+                ffmpeg_exe, '-y',  # Utiliser l'exécutable correct
+                '-i', video_temp_path,  # Vidéo d'entrée
+                '-i', audio_temp_path,  # Audio d'entrée
+                '-c:v', 'libx264',  # Codec vidéo
+                '-c:a', 'aac',  # Codec audio
+                '-shortest',  # Durée du plus court
+                '-pix_fmt', 'yuv420p',  # Format de pixel compatible
                 final_temp_path
             ]
             
@@ -712,11 +712,11 @@ def create_video_file_with_audio(audio_data, sample_rate, target_fps=30):
                           stdout=subprocess.DEVNULL, 
                           stderr=subprocess.DEVNULL)
             
-            # Leer video final con audio
+            # Lire la vidéo finale avec audio
             with open(final_temp_path, 'rb') as f:
                 video_bytes = f.read()
             
-            # Limpiar archivos temporales
+            # Nettoyer les fichiers temporaires
             os.unlink(video_temp_path)
             os.unlink(audio_temp_path)
             os.unlink(final_temp_path)
@@ -724,8 +724,8 @@ def create_video_file_with_audio(audio_data, sample_rate, target_fps=30):
             return video_bytes
             
         except subprocess.CalledProcessError as e:
-            st.error(f"Error combinando audio y video: {e}")
-            # Devolver video sin audio como respaldo
+            st.error(f"Erreur lors de la combinaison audio et vidéo : {e}")
+            # Retourner la vidéo sans audio comme solution de secours
             with open(video_temp_path, 'rb') as f:
                 video_bytes = f.read()
             os.unlink(video_temp_path)
@@ -737,11 +737,11 @@ def create_video_file_with_audio(audio_data, sample_rate, target_fps=30):
             return video_bytes
         
     except Exception as e:
-        st.error(f"Error creando video: {e}")
+        st.error(f"Erreur lors de la création de la vidéo : {e}")
         return None
 
 def play_with_realtime_preview(audio_data, sample_rate, target_fps=45, num_points=3000):
-    """Sistema de reproducción con preview en tiempo real"""
+    """Système de lecture avec aperçu en temps réel"""
     
     processor = AudioProcessor(sample_rate, buffer_size=1024)
     renderer = CircularVisualRenderer(num_points=num_points)
@@ -758,7 +758,7 @@ def play_with_realtime_preview(audio_data, sample_rate, target_fps=45, num_point
             sd.play(audio_data, sample_rate)
             sd.wait()
         except Exception as e:
-            st.error(f"Error de audio: {e}")
+            st.error(f"Erreur audio : {e}")
     
     audio_thread = threading.Thread(target=audio_playback, daemon=True)
     audio_thread.start()
@@ -795,7 +795,7 @@ def play_with_realtime_preview(audio_data, sample_rate, target_fps=45, num_point
             
             if frame_count % 10 == 0:
                 fps_actual = 1.0 / (frame_start - last_frame_time + 1e-6)
-                info_text = f"⚡ {fps_actual:.1f} FPS | ⏱️ {elapsed_time:.2f}s/{audio_duration:.2f}s | 🔵 {num_points} puntos"
+                info_text = f"⚡ {fps_actual:.1f} FPS | ⏱️ {elapsed_time:.2f}s/{audio_duration:.2f}s | 🔵 {num_points} points"
                 if 'features' in locals() and not features['is_silent']:
                     info_text += f" | 🎵 {features['fundamental_freq']:.0f}Hz"
                 info_container.info(info_text)
@@ -815,10 +815,10 @@ def play_with_realtime_preview(audio_data, sample_rate, target_fps=45, num_point
             frame_count += 1
         
         progress_container.progress(1.0)
-        st.success(f"✅ Reproducción completada - {frame_count} frames @ {frame_count/audio_duration:.1f} FPS promedio")
+        st.success(f"✅ Lecture terminée - {frame_count} images @ {frame_count/audio_duration:.1f} FPS moyen")
         
     except Exception as e:
-        st.error(f"Error durante reproducción: {e}")
+        st.error(f"Erreur pendant la lecture : {e}")
     finally:
         st.session_state.is_playing = False
         try:
@@ -826,25 +826,25 @@ def play_with_realtime_preview(audio_data, sample_rate, target_fps=45, num_point
         except:
             pass
 
-# ===== INTERFAZ PRINCIPAL =====
+# ===== INTERFACE PRINCIPALE =====
 
-st.title("🌊 Visualizador Circular Mejorado - Con Audio y Círculo Suave")
+st.title("🌊 Visualiseur Circulaire Amélioré - Avec Audio et Cercle Lisse")
 st.markdown("---")
-st.markdown("🎵 **Carga archivos WAV** | 🎬 **Videos con audio** | 🌊 **Círculo perfectamente cerrado**")
-st.markdown("### 📁 Subir archivo → ▶️ Reproducir → 🎬 Generar video → ⬇️ Descargar con audio")
+st.markdown("🎵 **Charger fichiers WAV** | 🎬 **Vidéos avec audio** | 🌊 **Cercle parfaitement fermé**")
+st.markdown("### 📁 Télécharger fichier → ▶️ Lire → 🎬 Générer vidéo → ⬇️ Télécharger avec audio")
 st.markdown("---")
 
-# ===== SECCIÓN DE CARGA DE ARCHIVO =====
-st.header("📁 Cargar Archivo de Audio")
+# ===== SECTION DE CHARGEMENT DE FICHIER =====
+st.header("📁 Charger un Fichier Audio")
 
 uploaded_file = st.file_uploader(
-    "Selecciona un archivo WAV",
+    "Sélectionnez un fichier WAV",
     type=['wav'],
-    help="Sube un archivo .wav para visualizar"
+    help="Téléchargez un fichier .wav pour visualiser"
 )
 
 if uploaded_file is not None:
-    with st.spinner("🔄 Cargando archivo..."):
+    with st.spinner("🔄 Chargement du fichier..."):
         audio_data, sample_rate = load_wav_file(uploaded_file)
         
         if audio_data is not None:
@@ -853,47 +853,47 @@ if uploaded_file is not None:
             
             duration = len(audio_data) / sample_rate
             
-            st.success(f"✅ Archivo cargado: {uploaded_file.name}")
+            st.success(f"✅ Fichier chargé : {uploaded_file.name}")
             
             col1, col2, col3, col4 = st.columns(4)
             with col1:
-                st.metric("Duración", f"{duration:.2f}s")
+                st.metric("Durée", f"{duration:.2f}s")
             with col2:
-                st.metric("Sample Rate", f"{sample_rate} Hz")
+                st.metric("Fréq. échant.", f"{sample_rate} Hz")
             with col3:
-                st.metric("Muestras", f"{len(audio_data):,}")
+                st.metric("Échantillons", f"{len(audio_data):,}")
             with col4:
                 rms_level = np.sqrt(np.mean(audio_data**2))
                 st.metric("RMS", f"{rms_level:.4f}")
 
-# ===== CONTROLES DE VISUALIZACIÓN =====
+# ===== CONTRÔLES DE VISUALISATION =====
 if st.session_state.audio_data is not None:
-    st.header("🎨 Configuración de Visualización Mejorada")
+    st.header("🎨 Configuration de Visualisation Améliorée")
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        target_fps = st.slider("FPS objetivo", 15, 60, 30)
-        num_points = st.selectbox("Puntos en círculo", [2000, 3000, 4000, 5000], index=1)
+        target_fps = st.slider("FPS cible", 15, 60, 30)
+        num_points = st.selectbox("Points dans le cercle", [2000, 3000, 4000, 5000], index=1)
     
     with col2:
-        st.metric("Duración total", f"{len(st.session_state.audio_data)/st.session_state.sample_rate:.2f}s")
-        st.metric("Mejoras", "✅ Audio + Círculo suave")
+        st.metric("Durée totale", f"{len(st.session_state.audio_data)/st.session_state.sample_rate:.2f}s")
+        st.metric("Améliorations", "✅ Audio + Cercle lisse")
     
     with col3:
-        st.metric("Calidad video", f"{800}x{800}px")
-        st.metric("Audio en video", "✅ Incluido")
+        st.metric("Qualité vidéo", f"{800}x{800}px")
+        st.metric("Audio dans vidéo", "✅ Inclus")
     
-    # Información de mejoras
-    st.info("🆕 **Nuevas características:** El círculo ahora se cierra perfectamente sin discontinuidades y el video incluye el audio original sincronizado.")
+    # Information sur les améliorations
+    st.info("🆕 **Nouvelles fonctionnalités :** Le cercle se ferme maintenant parfaitement sans discontinuités et la vidéo inclut l'audio original synchronisé.")
     
     st.markdown("---")
     
-    # ===== BOTONES DE CONTROL =====
+    # ===== BOUTONS DE CONTRÔLE =====
     col_a, col_b, col_c = st.columns(3)
     
     with col_a:
-        if st.button("▶️ Preview en Tiempo Real", type="primary", use_container_width=True):
+        if st.button("▶️ Aperçu en Temps Réel", type="primary", use_container_width=True):
             st.session_state.is_playing = True
             
             play_with_realtime_preview(
@@ -904,8 +904,8 @@ if st.session_state.audio_data is not None:
             )
     
     with col_b:
-        if st.button("🎬 Generar Video con Audio", use_container_width=True):
-            with st.spinner("🎬 Generando video mejorado..."):
+        if st.button("🎬 Générer Vidéo avec Audio", use_container_width=True):
+            with st.spinner("🎬 Génération de la vidéo améliorée..."):
                 success = generate_video_with_audio(
                     st.session_state.audio_data,
                     st.session_state.sample_rate,
@@ -914,32 +914,32 @@ if st.session_state.audio_data is not None:
                 )
                 
                 if success:
-                    st.success(f"✅ Video generado con {len(st.session_state.video_frames)} frames y círculo suave")
+                    st.success(f"✅ Vidéo générée avec {len(st.session_state.video_frames)} images et cercle lisse")
                 else:
-                    st.error("❌ Error generando video")
+                    st.error("❌ Erreur lors de la génération de la vidéo")
     
     with col_c:
-        if st.button("⏹️ Detener", use_container_width=True):
+        if st.button("⏹️ Arrêter", use_container_width=True):
             st.session_state.is_playing = False
             sd.stop()
-            st.info("⏸️ Detenido")
+            st.info("⏸️ Arrêté")
 
-# ===== SECCIÓN DE DESCARGA MEJORADA =====
+# ===== SECTION DE TÉLÉCHARGEMENT AMÉLIORÉE =====
 if st.session_state.video_frames:
-    st.header("⬇️ Descargar Video con Audio")
+    st.header("⬇️ Télécharger la Vidéo avec Audio")
     
     col_download1, col_download2 = st.columns(2)
     
     with col_download1:
-        st.success(f"🎬 Video listo: {len(st.session_state.video_frames)} frames")
+        st.success(f"🎬 Vidéo prête : {len(st.session_state.video_frames)} images")
         
         duration_video = len(st.session_state.video_frames) / target_fps
-        st.info(f"📊 Duración: {duration_video:.2f}s @ {target_fps} FPS")
-        st.success("🔊 Con audio sincronizado incluido")
+        st.info(f"📊 Durée : {duration_video:.2f}s @ {target_fps} FPS")
+        st.success("🔊 Avec audio synchronisé inclus")
     
     with col_download2:
-        if st.button("🎬 Crear archivo MP4 con Audio", use_container_width=True):
-            with st.spinner("📦 Creando archivo MP4 con audio..."):
+        if st.button("🎬 Créer fichier MP4 avec Audio", use_container_width=True):
+            with st.spinner("📦 Création du fichier MP4 avec audio..."):
                 video_bytes = create_video_file_with_audio(
                     st.session_state.audio_data,
                     st.session_state.sample_rate,
@@ -948,123 +948,123 @@ if st.session_state.video_frames:
                 
                 if video_bytes:
                     st.download_button(
-                        label="⬇️ Descargar Video MP4 con Audio",
+                        label="⬇️ Télécharger Vidéo MP4 avec Audio",
                         data=video_bytes,
-                        file_name=f"audio_viz_con_audio_{int(time.time())}.mp4",
+                        file_name=f"visualisation_audio_avec_audio_{int(time.time())}.mp4",
                         mime="video/mp4",
                         use_container_width=True
                     )
-                    st.success("✅ ¡Archivo MP4 con audio listo para descargar!")
+                    st.success("✅ ¡Fichier MP4 avec audio prêt à télécharger !")
 
-# ===== INFORMACIÓN Y AYUDA =====
-with st.expander("📖 Instrucciones de Uso - Versión Mejorada"):
+# ===== INFORMATION ET AIDE =====
+with st.expander("📖 Instructions d'Utilisation - Version Améliorée"):
     st.markdown("""
-    ### 🚀 Pasos para crear tu visualización mejorada:
+    ### 🚀 Étapes pour créer votre visualisation améliorée :
     
-    1. **📁 Cargar Audio**: Sube un archivo `.wav` usando el botón de arriba
-    2. **⚙️ Configurar**: Ajusta FPS, puntos y calidad según tus preferencias
-    3. **▶️ Preview**: Usa "Preview en Tiempo Real" para ver la visualización mejorada
-    4. **🎬 Generar**: Presiona "Generar Video con Audio" para crear el video completo
-    5. **⬇️ Descargar**: Crea y descarga el archivo MP4 con audio sincronizado
+    1. **📁 Charger Audio** : Téléchargez un fichier `.wav` en utilisant le bouton ci-dessus
+    2. **⚙️ Configurer** : Ajustez les FPS, points et qualité selon vos préférences
+    3. **▶️ Aperçu** : Utilisez "Aperçu en Temps Réel" pour voir la visualisation améliorée
+    4. **🎬 Générer** : Appuyez sur "Générer Vidéo avec Audio" pour créer la vidéo complète
+    5. **⬇️ Télécharger** : Créez et téléchargez le fichier MP4 avec audio synchronisé
     
-    ### 🆕 Nuevas Mejoras:
-    - **🔄 Círculo perfectamente cerrado**: El inicio y final se unen suavemente sin discontinuidades
-    - **🔊 Audio incluido**: El video descargado incluye el audio original sincronizado
-    - **🎨 Suavizado circular**: Algoritmos especiales que respetan la continuidad circular
-    - **⚡ Mejor rendimiento**: Optimizaciones en el renderizado y procesamiento
+    ### 🆕 Nouvelles Améliorations :
+    - **🔄 Cercle parfaitement fermé** : Le début et la fin se rejoignent en douceur sans discontinuités
+    - **🔊 Audio inclus** : La vidéo téléchargée inclut l'audio original synchronisé
+    - **🎨 Lissage circulaire** : Algorithmes spéciaux qui respectent la continuité circulaire
+    - **⚡ Meilleures performances** : Optimisations dans le rendu et le traitement
     
-    ### 🎨 Características técnicas:
-    - **Forma circular optimizada** con unión suave garantizada
-    - **Audio sincronizado** usando FFmpeg para máxima compatibilidad
-    - **Puntos controlados** (1-12px) con suavizado circular
-    - **Colores continuos** que respetan la geometría circular
-    - **Alta calidad** 800x800px con audio de alta fidelidad
+    ### 🎨 Caractéristiques techniques :
+    - **Forme circulaire optimisée** avec jonction lisse garantie
+    - **Audio synchronisé** utilisant FFmpeg pour une compatibilité maximale
+    - **Points contrôlés** (1-12px) avec lissage circulaire
+    - **Couleurs continues** qui respectent la géométrie circulaire
+    - **Haute qualité** 800x800px avec audio haute fidélité
     
-    ### 💡 Consejos mejorados:
-    - **Círculo suave**: Ahora el círculo se cierra perfectamente en todos los casos
-    - **Audio incluido**: No necesitas combinar audio por separado
-    - **FFmpeg automático**: Se instala automáticamente si no está disponible
-    - **Compatibilidad total**: Videos MP4 reproducibles en cualquier dispositivo
+    ### 💡 Conseils améliorés :
+    - **Cercle lisse** : Le cercle se ferme maintenant parfaitement dans tous les cas
+    - **Audio inclus** : Pas besoin de combiner l'audio séparément
+    - **FFmpeg automatique** : S'installe automatiquement s'il n'est pas disponible
+    - **Compatibilité totale** : Vidéos MP4 lisibles sur n'importe quel appareil
     """)
 
-with st.expander("⚙️ Mejoras Técnicas Implementadas"):
-    st.markdown("### 🔧 Algoritmos de Suavizado Circular:")
+with st.expander("⚙️ Améliorations Techniques Implémentées"):
+    st.markdown("### 🔧 Algorithmes de Lissage Circulaire :")
     st.markdown(f"""
-    - **Ventana gaussiana circular**: Suavizado que respeta la geometría del círculo
-    - **Unión perfecta**: Los puntos inicial y final se mezclan suavemente
-    - **Continuidad garantizada**: Sin saltos visuales en la unión
-    - **Suavizado adaptativo**: Intensidad ajustada según el tipo de efecto
-    - **Preservación de forma**: El círculo base siempre permanece reconocible
+    - **Fenêtre gaussienne circulaire** : Lissage qui respecte la géométrie du cercle
+    - **Jonction parfaite** : Les points initial et final se mélangent en douceur
+    - **Continuité garantie** : Sans sauts visuels dans la jonction
+    - **Lissage adaptatif** : Intensité ajustée selon le type d'effet
+    - **Préservation de forme** : Le cercle de base reste toujours reconnaissable
     """)
     
-    st.markdown("### 🎬 Sistema de Audio Integrado:")
+    st.markdown("### 🎬 Système Audio Intégré :")
     st.markdown("""
-    - **FFmpeg automático**: Detección e instalación automática
-    - **Sincronización perfecta**: Frame-perfect timing entre audio y video
-    - **Codecs optimizados**: H.264 para video + AAC para audio
-    - **Compatibilidad universal**: Reproducible en todos los dispositivos
-    - **Calidad preservada**: Audio de 16-bit sin pérdida de calidad
-    - **Respaldo sin audio**: Si FFmpeg falla, se genera video sin audio
+    - **FFmpeg automatique** : Détection et installation automatique
+    - **Synchronisation parfaite** : Timing parfait image par image entre audio et vidéo
+    - **Codecs optimisés** : H.264 pour vidéo + AAC pour audio
+    - **Compatibilité universelle** : Lisible sur tous les appareils
+    - **Qualité préservée** : Audio 16-bit sans perte de qualité
+    - **Solution de secours sans audio** : Si FFmpeg échoue, génère vidéo sans audio
     """)
     
-    st.markdown("### 🔄 Proceso de Mejora del Círculo:")
+    st.markdown("### 🔄 Processus d'Amélioration du Cercle :")
     st.markdown("""
-    1. **Generación base**: Crear puntos distribuidos uniformemente
-    2. **Aplicar efectos**: Distorsiones controladas por audio
-    3. **Suavizado circular**: Ventana gaussiana que respeta circularidad
-    4. **Verificar cierre**: Algoritmo especial para unir inicio/final
-    5. **Renderizado suave**: Puntos con tamaños y colores continuos
+    1. **Génération de base** : Créer des points distribués uniformément
+    2. **Appliquer les effets** : Distorsions contrôlées par l'audio
+    3. **Lissage circulaire** : Fenêtre gaussienne qui respecte la circularité
+    4. **Vérifier la fermeture** : Algorithme spécial pour joindre début/fin
+    5. **Rendu lisse** : Points avec tailles et couleurs continues
     """)
 
-# Estado actual mejorado
+# État actuel amélioré
 if st.session_state.audio_data is not None:
     st.markdown("---")
-    st.markdown("### 📊 Estado Actual - Versión Mejorada")
+    st.markdown("### 📊 État Actuel - Version Améliorée")
     
     col_status1, col_status2, col_status3, col_status4 = st.columns(4)
     
     with col_status1:
-        st.success("🎵 Audio cargado")
+        st.success("🎵 Audio chargé")
         duration = len(st.session_state.audio_data) / st.session_state.sample_rate
-        st.write(f"Duración: {duration:.2f}s")
+        st.write(f"Durée : {duration:.2f}s")
     
     with col_status2:
         if st.session_state.video_frames:
-            st.success("🎬 Video generado")
-            st.write(f"Frames: {len(st.session_state.video_frames)}")
+            st.success("🎬 Vidéo générée")
+            st.write(f"Images : {len(st.session_state.video_frames)}")
         else:
-            st.info("⏳ Video pendiente")
+            st.info("⏳ Vidéo en attente")
     
     with col_status3:
         ffmpeg_available = check_ffmpeg()
         if ffmpeg_available:
             st.success("🔊 FFmpeg disponible")
-            st.write("Audio: ✅ Habilitado")
+            st.write("Audio : ✅ Activé")
         else:
-            st.warning("🔊 FFmpeg no disponible")
-            st.write("Se intentará instalar")
+            st.warning("🔊 FFmpeg non disponible")
+            st.write("Tentative d'installation")
     
     with col_status4:
         if st.session_state.is_playing:
-            st.warning("▶️ Reproduciendo...")
+            st.warning("▶️ En lecture...")
         else:
-            st.info("⏸️ Detenido")
+            st.info("⏸️ Arrêté")
 
-# Debug info mejorado
-with st.expander("🔧 Información de Debug - Versión Mejorada"):
-    st.write("**Estado interno mejorado:**")
-    st.write(f"- Audio cargado: {st.session_state.audio_data is not None}")
-    st.write(f"- Sample rate: {st.session_state.sample_rate}")
-    st.write(f"- Reproduciendo: {st.session_state.is_playing}")
-    st.write(f"- Frames de video: {len(st.session_state.video_frames) if st.session_state.video_frames else 0}")
-    st.write(f"- FFmpeg disponible: {check_ffmpeg()}")
+# Info de débogage améliorée
+with st.expander("🔧 Information de Débogage - Version Améliorée"):
+    st.write("**État interne amélioré :**")
+    st.write(f"- Audio chargé : {st.session_state.audio_data is not None}")
+    st.write(f"- Fréquence d'échantillonnage : {st.session_state.sample_rate}")
+    st.write(f"- En lecture : {st.session_state.is_playing}")
+    st.write(f"- Images de vidéo : {len(st.session_state.video_frames) if st.session_state.video_frames else 0}")
+    st.write(f"- FFmpeg disponible : {check_ffmpeg()}")
     
     if st.session_state.audio_data is not None:
-        st.write(f"- Duración total: {len(st.session_state.audio_data)/st.session_state.sample_rate:.2f}s")
-        st.write(f"- RMS promedio: {np.sqrt(np.mean(st.session_state.audio_data**2)):.4f}")
-        st.write(f"- Rango dinámico: {np.min(st.session_state.audio_data):.3f} a {np.max(st.session_state.audio_data):.3f}")
-        st.write(f"- Mejoras activas: Círculo suave ✅, Audio en video ✅")
+        st.write(f"- Durée totale : {len(st.session_state.audio_data)/st.session_state.sample_rate:.2f}s")
+        st.write(f"- RMS moyen : {np.sqrt(np.mean(st.session_state.audio_data**2)):.4f}")
+        st.write(f"- Plage dynamique : {np.min(st.session_state.audio_data):.3f} à {np.max(st.session_state.audio_data):.3f}")
+        st.write(f"- Améliorations actives : Cercle lisse ✅, Audio dans vidéo ✅")
 
 st.markdown("---")
-st.markdown("🌊 **Visualizador Circular Mejorado** - Círculo perfectamente cerrado + Audio incluido")
-st.markdown("### 📁 ▶️ 🎬 🔊 ⬇️ Pipeline completo con audio sincronizado")
+st.markdown("🌊 **Visualiseur Circulaire Amélioré** - Cercle parfaitement fermé + Audio inclus")
+st.markdown("### 📁 ▶️ 🎬 🔊 ⬇️ Pipeline complet avec audio synchronisé")
